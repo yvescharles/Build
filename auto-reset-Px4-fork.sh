@@ -1,6 +1,6 @@
 #!/bin/bash
 clear
-daten=`date +%y%m%d-%H:%M:%S`
+daten=`date +%y%m%d-%H%M%S`
 message="
 ----------------------------------------------------------------------------------\n
 --     script de compilation auto PX4 v$daten  --\n
@@ -12,8 +12,9 @@ nom="v_$daten"
 nomcompil="compilation_$nom"
 dir="/root/Build/$nomcompil"
 log="$dir/log.txt"
-git branch -D $nomcompil
-git checkout -b $nomcompil
+cd /root/Buid
+git branch -D "$nomcompil"
+git checkout -b "$nomcompil"
 mkdir -p $dir
 
 cd /root/src/Firmware
