@@ -1,24 +1,70 @@
 #!/bin/bash
-PATH="$PATH:`pwd`"
-echo $PATH
+#================================================================
+#
+# script de compilation automatique du firmware PX4
+#
+# by yc@avioneo.com
+#
+#================================================================
 
-# Chargement de l'entête
-header-compil.sh
+# Variabes locales
+racine=`pwd`
+Firmware="/root/src/Firmware"
+datenow=`date +%y%m%d-%H%M%S`
+nom="v_$datenow"
+nomcompil="compilation_$nom"
+dir="$racine/$nomcompil"
+log="$dir/log.txt"
+
+# Update varaible globale rep en cours
+PATH="$PATH:$racine"
+
+# fonction header
+header(){
+local message="\n
+----------------------------------------------------\n
+--     script de compilation auto PX4 v_$1   --\n
+----------------------------------------------------\n"
+# impression UI
+clear
+echo -e $message
+}
+
+
+# START : Initialisation choix reset fork
+header $datenox
+read -p "voulez-vous réinitialiser le fork à l'identique des sources d'origine ? :(o/n)" -n1 -t1 rep
+if [ rep = "o" ]
+then 
+	echo "Ok réinitialisation dans 5sec"
+	sleep 5
+	reset-auto-fork-Px4.sh
+fi
+
+# refresh screen now
+header $datenow
 
 # Préparation compilation
-cd /root/src/Firmware
+contenu(){
+cd $2
 echo ""
-echo "Contenu du dossier source clone de PX4/Firmware :"
+echo "contenu du dossier $1 $2"
 ls
-
-echo""
+echo ""
 git status
-
 echo ""
 echo "liste des branches dans le repository :"
-git branch
+git branch 
+sleep 2
+}
 
-# Selection et Test de la Branche à compiler
+contenu "de destination " "$racine"
+header $datenow
+contenu "source clone de PX4/Firmware :" "$Firmware" 
+
+#Selection et Test de la Branche à compiler
+echo ""
+echo "Ctrl+C pour abort si vous avez vu du rouge !"
 echo ""
 read -p 'Entrez le nom de la branche du Firmware à compiler (30sec / 15 car max) : ' -n 15 -t 30  branche
 
@@ -35,7 +81,25 @@ then
 	echo ""
 	echo "creation d'une branche temporarire pouur la compilatio du code"
 	git checkout -B temp
-	compil-Px4.sh
+	
+
+	#iExecution des script de compilation
+	sudo ./Tools/docker_run.sh 'make clean'
+	sudo ./Tools/docker_run.sh 'make px4_fmu-v3_default'
+
+	# Enregistrement du Firmware et publication sur GitHub
+	cd $racine
+	git checkout -b "$nomcompil"
+	mkdir -p $dir
+	cp $Firmware/build/px4_fmu-v3_default/px4_fmu-v3_default.px4 $dir/px4_fmu-v3_default.px4
+	
+	contenu "di dossier compilé" "$dir"
+	
+	echo "publication sur GiHub"
+	git add $dir
+	git commit -m "push auto $nom $comm"
+	git push origin $nomcompil
+
 	git checkout master
 	git branch -D temp
 	echo ""
