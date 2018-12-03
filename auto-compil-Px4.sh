@@ -89,19 +89,21 @@ then
 
 	# Enregistrement du Firmware et publication sur GitHub
 	cd $racine
+	git checkout master
 	git checkout -b "$nomcompil"
 	mkdir -p $dir
 	cp $Firmware/build/px4_fmu-v3_default/px4_fmu-v3_default.px4 $dir/px4_fmu-v3_default.px4
-	
-	contenu "di dossier compilé" "$dir"
-	
-	echo "publication sur GiHub"
+	contenu "du dossier compilé" "$dir"
+	echo ""
+	echo "publication sur GitHub"
 	git add $dir
 	git commit -m "push auto $nom $comm"
 	git push origin $nomcompil
 
+	cd $firmware
 	git checkout master
 	git branch -D temp
+	contenu "du dossier d'origine" "$Firmware"
 	echo ""
 	echo "FIN DU SCRIPT NORMALE"
 else
