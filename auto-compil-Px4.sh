@@ -1,32 +1,59 @@
 #!/bin/bash
-clear
-daten=`date +%y%m%d-%H%M%S`
-message="
-----------------------------------------------------------------------------------\n
---     script de compilation auto PX4 v$daten  --\n
-----------------------------------------------------------------------------------\n"
-echo -e $message
+PATH="$PATH:`pwd`"
+echo $PATH
 
-nom="v_$daten"
+# Chargement de l'entête
+header-compil.sh
 
-nomcompil="compilation_$nom"
-dir="/root/Build/$nomcompil"
-log="$dir/log.txt"
-cd /root/Buid
-git checkout -b "$nomcompil"
-mkdir -p $dir
-
+# Préparation compilation
 cd /root/src/Firmware
-sudo ./Tools/docker_run.sh 'make clean'
-sudo ./Tools/docker_run.sh 'make px4_fmu-v3_default'
-cp /root/src/Firmware/build/px4_fmu-v3_default/px4_fmu-v3_default.px4 $dir/px4_fmu-v3_default.px4
+echo ""
+echo "Contenu du dossier source clone de PX4/Firmware :"
+ls
 
-read -p 'Entrez le commentaire de cette version à commiter (12 car  max) : ' -n 12 -t 30  comm
-cd $dir
-git branch
+echo""
 git status
-git add $dir
-git commit -m "push auto $nom $comm"
-git push origin $nomcompil
-git checkout master
 
+echo ""
+echo "liste des branches dans le repository :"
+git branch
+
+# Selection et Test de la Branche à compiler
+echo ""
+read -p 'Entrez le nom de la branche du Firmware à compiler (30sec / 15 car max) : ' -n 15 -t 30  branche
+
+exists=`git show-ref refs/heads/$branche`
+if [ -n "$exists" ]
+then
+   	echo ""
+	echo "la branche existe --> OK pour compliation"
+	echo ""
+	read -p 'Entrez le commentaire de cette version à commiter (20 car max) : ' -n 20 -t 30  comm
+	echo ">>>>>>>> OK !"
+	git checkout $branche
+	git branch
+	echo ""
+	echo "creation d'une branche temporarire pouur la compilatio du code"
+	git checkout -B temp
+	compil-Px4.sh
+	git checkout master
+	git branch -D temp
+	echo ""
+	echo "FIN DU SCRIPT NORMALE"
+else
+	echo ""
+	echo ">>>>>>> ATTENTION ! cette branche n'existe pas --> STOP"
+	echo ""
+	read -p "réessayer ? (o/n) : " -n 1 -t 30 rep
+	echo ""
+	if [ $rep = 'o' ]
+	then
+		echo "allez hop on y va !"
+		auto-compil-Px4.sh
+	else
+		echo ">>>> OK à bientôt !"
+		echo ""
+		echo ">>>>>>>> ATTENTION : FIN DU SCRIPT SANS COMPILATION"
+	fi
+fi
+echo ""
