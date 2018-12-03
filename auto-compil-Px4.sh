@@ -93,14 +93,16 @@ then
 	git checkout -b "$nomcompil"
 	mkdir -p $dir
 	cp $Firmware/build/px4_fmu-v3_default/px4_fmu-v3_default.px4 $dir/px4_fmu-v3_default.px4
-	contenu "du dossier compilé" "$dir"
 	echo ""
 	echo "publication sur GitHub"
 	git add $dir
 	git commit -m "push auto $nom $comm"
 	git push origin $nomcompil
+	git checkout master
+	echo ""
+	contenu "du dossier compilé" "$dir"
 
-	cd $firmware
+	cd $Firmware
 	git checkout master
 	git branch -D temp
 	contenu "du dossier d'origine" "$Firmware"
