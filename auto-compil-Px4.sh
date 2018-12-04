@@ -33,9 +33,10 @@ echo -e $message
 
 # START : Initialisation choix reset fork
 header $datenox
-read -p "voulez-vous réinitialiser le fork à l'identique des sources d'origine ? :(o/n)" -n1 -t1 rep
-if [ rep = "o" ]
+read -p "voulez-vous réinitialiser le fork à l'identique des sources d'origine ? :(o/n)" -n1 -t5 rep
+if [ $rep = "o" ]
 then 
+	echo ""
 	echo "Ok réinitialisation dans 5sec"
 	sleep 5
 	reset-auto-fork-Px4.sh
@@ -74,20 +75,35 @@ then
    	echo ""
 	echo "la branche existe --> OK pour compliation"
 	echo ""
+	echo ""
 	read -p 'Entrez le commentaire de cette version à commiter (20 car max) : ' -n 20 -t 30  comm
 	echo ">>>>>>>> OK !"
 	git checkout $branche
+	git fetch
 	git branch
+
 	echo ""
-	echo "creation d'une branche temporarire pouur la compilatio du code"
+	echo "mise à jour de la branche depuis le repository clone sur GitHub"
+	git pull orgin $branche
+
+	echo ""
+	echo ">>> creation d'une branche temporarire pouur la compilation du code"
 	git checkout -B temp
-	
+	sleep 2	
 
 	#iExecution des script de compilation
+	header $ddatenow
+	echo ">>>>>> complilation du Firmware"
 	sudo ./Tools/docker_run.sh 'make clean'
 	sudo ./Tools/docker_run.sh 'make px4_fmu-v3_default'
+	mess="OK well done si la sortie ressemble à :\n
+	-- Build files have been written to: $Firmware/src/Firmware/build/px4_fmu-v3_default.px4\n
+	[1014/1014] Creating $Firmware/build/px4_fmu-v4_default/px4_fmu-v3_default.px4\n"
+	echo -e $mess
+	read -n1 -t 20	
 
 	# Enregistrement du Firmware et publication sur GitHub
+	header $datenow
 	cd $racine
 	git checkout master
 	git checkout -b "$nomcompil"
@@ -116,9 +132,33 @@ else
 	echo ""
 	if [ $rep = 'o' ]
 	then
-		echo "allez hop on y va !"
-		auto-compil-Px4.sh
-	else
+		echo ""
+		read -p "voulez-vous d'abord voir la liste complète des branches non synchronisées ? (o/n)" -n 1 -t 4 rep
+		echo ""
+	        if [ $rep = 'o' ]
+		then
+			git branch -a
+			echo ""
+			read -p "une branche à tirer ? (o/n)" -n 1 -t 5 rep
+			if [ $rep = 'o' ]
+			then
+				echo ""
+				read -p "son nom ? : " -n 30 distb
+				echo ""
+				git checkout --track origin/$distb
+				git status
+				sleep 5
+				git log
+				git checkout master
+			fi
+			echo ""
+			echo "aller hop on relance !"
+			auto-compil-Px4.sh
+		else
+			echo ""
+			echo "c'est parti mon kiki je relaanec"
+			auto-compil-Px4.sh
+		fi
 		echo ">>>> OK à bientôt !"
 		echo ""
 		echo ">>>>>>>> ATTENTION : FIN DU SCRIPT SANS COMPILATION"
