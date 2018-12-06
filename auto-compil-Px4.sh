@@ -8,7 +8,7 @@
 #================================================================
 
 # Variabes locales
-racine=`pwd`
+racine=/root/Build
 Firmware="/root/src/Firmware"
 datenow=`date +%y%m%d-%H%M%S`
 nom="v_$datenow"
@@ -72,24 +72,22 @@ read -p 'Entrez le nom de la branche du Firmware à compiler (30sec / 15 car max
 exists=`git show-ref refs/heads/$branche`
 if [ -n "$exists" ]
 then
-   	echo ""
+   	cd $Firmware
+	echo ""
 	echo "la branche existe --> OK pour compliation"
 	echo ""
 	echo ""
 	read -p 'Entrez le commentaire de cette version à commiter (20 car max) : ' -n 20 -t 30  comm
 	echo ">>>>>>>> OK !"
 	git checkout $branche
-	git fetch
-	git branch
 
 	echo ""
 	echo "mise à jour de la branche depuis le repository clone sur GitHub"
-	git pull orgin $branche
+	git pull
 
 	echo ""
 	echo ">>> creation d'une branche temporarire pouur la compilation du code"
 	git checkout -B temp
-	sleep 2	
 
 	#iExecution des script de compilation
 	header $ddatenow
@@ -100,14 +98,14 @@ then
 	-- Build files have been written to: $Firmware/src/Firmware/build/px4_fmu-v3_default.px4\n
 	[1014/1014] Creating $Firmware/build/px4_fmu-v4_default/px4_fmu-v3_default.px4\n"
 	echo -e $mess
-	read -n1 -t 20	
+	read -p "appuyer une touche porr continuer" -n1 -t 60	
 
 	# Enregistrement du Firmware et publication sur GitHub
 	header $datenow
 	cd $racine
 	git checkout master
 	git checkout -b "$nomcompil"
-	mkdir -p $dir
+	mkdir $dir
 	cp $Firmware/build/px4_fmu-v3_default/px4_fmu-v3_default.px4 $dir/px4_fmu-v3_default.px4
 	echo ""
 	echo "publication sur GitHub"
